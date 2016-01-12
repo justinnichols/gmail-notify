@@ -113,7 +113,7 @@ function createSliderSetting(setting) {
 	let slider_label = new Gtk.Label({label: settings_slider[setting].label,
                                        xalign: 0 });
                          
-	let setting_slider =  Gtk.Scale.new_with_range(0,60,1800,1);
+	let setting_slider =  Gtk.Scale.new_with_range(0,10,1800,1);
 	setting_slider.expand = true;	
 	setting_slider.connect('value-changed', function(button,data) {		
 		try {			
