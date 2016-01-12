@@ -297,7 +297,7 @@ Imap.prototype= {
 													m.set("id",parseInt(idmatches[1]));
 													if (_DEBUG) global.log(idmatches[2]);
 													let ba=BigInteger.BigInteger.parse(idmatches[2]);
-													m.set("link",'http://mail.google.com/mail?account_id='+this._conn._oAccount.get_account().identity+'&message_id='+ba.toString(16).toLowerCase()+'&view=conv&extsrc=atom');
+													m.set("link",'https://mail.google.com/mail/a/?authuser='+this._conn._oAccount.get_account().identity+'&account_id='+this._conn._oAccount.get_account().identity+'&message_id='+ba.toString(16).toLowerCase()+'&view=conv&extsrc=atom');
 												}
 												catch (err) {
 													global.log(err.message);

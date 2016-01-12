@@ -103,7 +103,8 @@ function onTimer()
 		global.log("onTimer :"+err.message);
 	}
 	return true;
-};
+}
+
 function oneTime()
 {
 	if (_DEBUG )global.log("oneTime");
@@ -366,9 +367,25 @@ function _showHello(object,event) {
 				global.log("gmail notify: no default browser")
 			}
 			else {
-					global.log("object link: "+object.link)
+					global.log("object link: "+object.link);
 					if (object.link!='' && typeof(object.link)!='undefined'){
-						Utils.trySpawnCommandLine(config._browser+" "+object.link);
+						// alter the object.link due to gnome possibly not taking into account multiple gmail accounts
+						// example: https://mail.google.com/mail/a/?authuser=name@example.com&account_id=name@example.com&message_id=idhere&view=conv&extsrc=atom
+						var link = object.link;
+						if (link.indexOf("mail.google.com/mail/a/") < 0 && link.indexOf("authuser") < 0) {
+							// alter it
+							var parts = link.split("?");
+							var accountId = parts[1].substring(parts[1].indexOf("account_id"), parts[1].indexOf("&message_id")).split("=")[1];
+							link = parts[0];
+							if (parts[0].indexOf("/", parts[0].length - 1) === -1) {
+								link = link + "/";
+							}
+							link = link + "a/?authuser=" + accountId + "&" + parts[1];
+							global.log("ALTERED object link: "+object.link);
+						}
+
+						Utils.trySpawnCommandLine(config._browser+" "+link);
+						onetime= GLib.timeout_add_seconds(0,5, oneTime);
 					}
 					else {
 						Utils.trySpawnCommandLine(config._browser+" http://www.gmail.com");
@@ -456,12 +473,13 @@ GmailButton.prototype = {
 		}
 
 	},
-	_showNoMessage : function() {
+	_showNoMessage : function(account) {
 		if (_DEBUG) global.log("Gmail set content: no message");
 		try {
 			let note=new Imap.ImapMessage();
 			note.date=new Date();
 			note.subject=_('No new messages');
+			note.link = "https://mail.google.com/mail/a/?authuser=" + account + "&account_id=" + account;
 			let msg = new GmailMenuItem(note,{reactive: true
                            });
 			msg.connect('activate', _showHello);
@@ -562,7 +580,7 @@ GmailButton.prototype.setContent=function (content,add,mailbox) {
 			}
 			else {
 
-				this._showNoMessage();
+				this._showNoMessage(mailbox);
 			}
 			let mbox=new MailboxMenuItem(mailbox);
 			mbox.connect('activate', _showHello);
@@ -570,7 +588,7 @@ GmailButton.prototype.setContent=function (content,add,mailbox) {
 			this.menu.addMenuItem(mbox,0);
 		}
 		else {
-				this._showNoMessage();
+				this._showNoMessage(mailbox);
 		}
 		if (nVersion > _version ) {
 			let note=new Imap.ImapMessage();
@@ -671,6 +689,7 @@ MailboxMenuItem.prototype = {
         iconBox.child = Clutter.Texture.new_from_file(extensionPath+"/icons/mailbox.png");
 		iconBox.set_style("padding-right:10px")
         this.label.add(iconBox);
+		this.link = "https://mail.google.com/mail/a/?authuser=" + text + "&account_id=" + text;
         let mailbox = new St.Label({ text: text});
         mailbox.set_style("font-size:14px;")
         this.label.add(mailbox);
